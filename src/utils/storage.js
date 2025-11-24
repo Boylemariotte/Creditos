@@ -1,6 +1,8 @@
 // Clave para almacenar tema en localStorage
 const THEME_KEY = 'noda_theme';
-const API_URL = 'http://localhost:3001/api/expenses';
+const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001') + '/expenses';
+
+// ... (rest of the file)
 
 // Helper to get headers with token
 export const getHeaders = () => {
@@ -294,7 +296,7 @@ export const saveTheme = (theme) => {
 
 // --- INCOME FUNCTIONS ---
 
-const INCOME_API_URL = 'http://localhost:3001/api/incomes';
+const INCOME_API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001') + '/incomes';
 
 // Obtener todos los ingresos
 export const getIncomes = async (mode = 'personal') => {
@@ -349,7 +351,7 @@ export const getTotalIncomes = (incomes = []) => {
 
 // --- EVENTS FUNCTIONS ---
 
-const EVENT_API_URL = 'http://localhost:3001/api/events';
+const EVENT_API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001') + '/events';
 
 // Obtener todos los eventos
 export const getEvents = async () => {

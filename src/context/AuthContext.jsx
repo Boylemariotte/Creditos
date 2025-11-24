@@ -15,9 +15,11 @@ export const AuthProvider = ({ children }) => {
         setLoading(false);
     }, []);
 
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+
     const login = async (email, password) => {
         try {
-            const response = await fetch('http://localhost:3001/api/auth/login', {
+            const response = await fetch(`${API_URL}/auth/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password }),
@@ -46,7 +48,7 @@ export const AuthProvider = ({ children }) => {
 
     const register = async (name, email, password, username) => {
         try {
-            const response = await fetch('http://localhost:3001/api/auth/register', {
+            const response = await fetch(`${API_URL}/auth/register`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name, email, password, username }),
@@ -69,7 +71,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     const searchUser = async (username) => {
-        const response = await fetch(`http://localhost:3001/api/user/search?username=${username}`, {
+        const response = await fetch(`${API_URL}/user/search?username=${username}`, {
             headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         });
         const data = await response.json();
@@ -78,7 +80,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     const sendLinkRequest = async (targetUserId) => {
-        const response = await fetch('http://localhost:3001/api/user/request-link', {
+        const response = await fetch(`${API_URL}/user/request-link`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -92,7 +94,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     const getRequests = async () => {
-        const response = await fetch('http://localhost:3001/api/user/requests', {
+        const response = await fetch(`${API_URL}/user/requests`, {
             headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         });
         const data = await response.json();
@@ -101,7 +103,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     const respondToRequest = async (requestId, action) => {
-        const response = await fetch('http://localhost:3001/api/user/respond-link', {
+        const response = await fetch(`${API_URL}/user/respond-link`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
