@@ -28,7 +28,7 @@
   },
   "scripts": {
     "dev": "vite",
-    "server": "cd server && npm run dev",
+    "server": "nodemon api/index.js",
     "start": "concurrently \"npm run server\" \"npm run dev\" --kill-others --prefix-colors \"magenta,blue\"",
     "build": "vite build",
     "preview": "vite preview",
