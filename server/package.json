@@ -1,7 +1,7 @@
 {
-    "name": "migasto-server",
+    "name": "noda-server",
     "version": "1.0.0",
-    "description": "Backend for Migasto",
+    "description": "Backend for NoDa",
     "main": "index.js",
     "scripts": {
         "start": "node index.js",

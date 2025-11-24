@@ -1,5 +1,5 @@
 // Clave para almacenar tema en localStorage
-const THEME_KEY = 'migasto_theme';
+const THEME_KEY = 'noda_theme';
 const API_URL = 'http://localhost:3001/api/expenses';
 
 // Helper to get headers with token
@@ -265,7 +265,7 @@ export const downloadCSV = (expenses = []) => {
   const url = URL.createObjectURL(blob);
 
   link.setAttribute('href', url);
-  link.setAttribute('download', `migasto_gastos_${new Date().toISOString().split('T')[0]}.csv`);
+  link.setAttribute('download', `noda_gastos_${new Date().toISOString().split('T')[0]}.csv`);
   link.style.visibility = 'hidden';
 
   document.body.appendChild(link);

@@ -1,4 +1,4 @@
-# MiGasto - Aplicación de Gestión de Gastos Personales
+# NoDa - Aplicación de Gestión de Gastos Personales
 
 Una aplicación web moderna y completa para registrar, visualizar y analizar tus gastos personales.
 
