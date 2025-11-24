@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { User, Mail, Calendar, DollarSign, Heart, Activity } from 'lucide-react';
 import { formatCurrency } from '../utils/storage';
+import API_URL from '../config';
 
 const ProfilePage = () => {
     const { logout } = useAuth();
@@ -16,7 +17,7 @@ const ProfilePage = () => {
     const fetchProfile = async () => {
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch('http://localhost:3001/api/user/profile', {
+            const response = await fetch(`${API_URL}/user/profile`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
 

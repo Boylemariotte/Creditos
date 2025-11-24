@@ -1,6 +1,9 @@
 // Clave para almacenar tema en localStorage
 const THEME_KEY = 'noda_theme';
-const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001') + '/expenses';
+import API_URL from '../config';
+
+
+const EXPENSE_API_URL = `${API_URL}/expenses`;
 
 // ... (rest of the file)
 
@@ -54,7 +57,7 @@ export const CATEGORIES = [
 // Obtener todos los gastos
 export const getExpenses = async (mode = 'personal') => {
   try {
-    const url = mode ? `${API_URL}?mode=${mode}` : API_URL;
+    const url = mode ? `${EXPENSE_API_URL}?mode=${mode}` : EXPENSE_API_URL;
     const response = await fetch(url, {
       headers: getHeaders(),
     });
@@ -69,7 +72,7 @@ export const getExpenses = async (mode = 'personal') => {
 // Agregar un nuevo gasto
 export const addExpense = async (expense) => {
   try {
-    const response = await fetch(API_URL, {
+    const response = await fetch(EXPENSE_API_URL, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(expense),
@@ -85,7 +88,7 @@ export const addExpense = async (expense) => {
 // Actualizar un gasto existente
 export const updateExpense = async (id, updatedData) => {
   try {
-    const response = await fetch(`${API_URL}/${id}`, {
+    const response = await fetch(`${EXPENSE_API_URL}/${id}`, {
       method: 'PUT',
       headers: getHeaders(),
       body: JSON.stringify(updatedData),
@@ -101,7 +104,7 @@ export const updateExpense = async (id, updatedData) => {
 // Eliminar un gasto
 export const deleteExpense = async (id) => {
   try {
-    const response = await fetch(`${API_URL}/${id}`, {
+    const response = await fetch(`${EXPENSE_API_URL}/${id}`, {
       method: 'DELETE',
       headers: getHeaders(),
     });
@@ -296,7 +299,7 @@ export const saveTheme = (theme) => {
 
 // --- INCOME FUNCTIONS ---
 
-const INCOME_API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001') + '/incomes';
+const INCOME_API_URL = `${API_URL}/incomes`;
 
 // Obtener todos los ingresos
 export const getIncomes = async (mode = 'personal') => {
@@ -351,7 +354,7 @@ export const getTotalIncomes = (incomes = []) => {
 
 // --- EVENTS FUNCTIONS ---
 
-const EVENT_API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001') + '/events';
+const EVENT_API_URL = `${API_URL}/events`;
 
 // Obtener todos los eventos
 export const getEvents = async () => {
