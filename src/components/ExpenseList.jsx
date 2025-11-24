@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Search, SortAsc, SortDesc, Download } from 'lucide-react';
 import ExpenseItem from './ExpenseItem';
-import { CATEGORIES, downloadCSV } from '../utils/storage';
+import { CATEGORIES, downloadCSV, formatCurrency } from '../utils/storage';
 
 const ExpenseList = ({ expenses, onEdit, onDelete }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -116,7 +116,7 @@ const ExpenseList = ({ expenses, onEdit, onDelete }) => {
               Mostrando {filteredExpenses.length} de {expenses.length} gastos
             </span>
             <span className="text-lg font-bold text-primary-600 dark:text-primary-400">
-              Total: ${filteredExpenses.reduce((sum, exp) => sum + parseFloat(exp.amount), 0).toFixed(2)}
+              Total: {formatCurrency(filteredExpenses.reduce((sum, exp) => sum + parseFloat(exp.amount), 0))}
             </span>
           </div>
         </div>

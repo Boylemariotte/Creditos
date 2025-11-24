@@ -1,0 +1,69 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String    @id @default(uuid())
+  email     String    @unique
+  username  String?   @unique
+  password  String
+  name      String?
+  expenses  Expense[]
+  incomes   Income[]
+  partnerId String?
+  partner   User?     @relation("UserPartner", fields: [partnerId], references: [id])
+  partnerOf User[]    @relation("UserPartner")
+  sentRequests     PartnerRequest[] @relation("SentRequests")
+  receivedRequests PartnerRequest[] @relation("ReceivedRequests")
+  createdAt DateTime @default(now())
+  events    Event[]
+}
+
+model Event {
+  id          String   @id @default(uuid())
+  title       String
+  date        DateTime
+  description String?
+  type        String   @default("payment") // payment, reminder
+  createdAt   DateTime @default(now())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+}
+
+model PartnerRequest {
+  id        String   @id @default(uuid())
+  senderId  String
+  sender    User     @relation("SentRequests", fields: [senderId], references: [id])
+  receiverId String
+  receiver  User     @relation("ReceivedRequests", fields: [receiverId], references: [id])
+  status    String   @default("PENDING")
+  createdAt DateTime @default(now())
+}
+
+model Expense {
+  id          String   @id @default(uuid())
+  amount      Float
+  category    String
+  date        DateTime
+  description String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+}
+
+model Income {
+  id          String   @id @default(uuid())
+  amount      Float
+  source      String
+  date        DateTime
+  description String?
+  createdAt   DateTime @default(now())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+}

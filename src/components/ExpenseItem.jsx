@@ -1,5 +1,5 @@
 import { Edit2, Trash2 } from 'lucide-react';
-import { CATEGORIES } from '../utils/storage';
+import { CATEGORIES, formatCurrency } from '../utils/storage';
 
 const ExpenseItem = ({ expense, onEdit, onDelete }) => {
   const category = CATEGORIES.find(cat => cat.value === expense.category);
@@ -46,7 +46,7 @@ const ExpenseItem = ({ expense, onEdit, onDelete }) => {
         {/* Monto */}
         <div className="text-right">
           <div className="text-2xl font-bold text-primary-600 dark:text-primary-400">
-            ${parseFloat(expense.amount).toFixed(2)}
+            {formatCurrency(expense.amount)}
           </div>
         </div>
 

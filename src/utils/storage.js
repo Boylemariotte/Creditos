@@ -1,6 +1,41 @@
-// Clave para almacenar gastos en localStorage
-const EXPENSES_KEY = 'migasto_expenses';
+// Clave para almacenar tema en localStorage
 const THEME_KEY = 'migasto_theme';
+const API_URL = 'http://localhost:3001/api/expenses';
+
+// Helper to get headers with token
+export const getHeaders = () => {
+  const token = localStorage.getItem('token');
+  return {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`,
+  };
+};
+
+export const formatCurrency = (amount) => {
+  if (amount === undefined || amount === null) return '$0';
+  const num = parseFloat(amount);
+  if (isNaN(num)) return '$0';
+
+  // Format integer part with dots for thousands
+  let formatted = num.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+
+  // Replace the millions separator (if it exists) with apostrophe
+  // Logic: The millions separator is the 2nd dot from the right (if number >= 1 million)
+  // Example: 1.200.000 -> 1'200.000
+  // Example: 18.000 -> 18.000
+
+  // We can use a regex to find the dot that is followed by 6 digits (and maybe more dots)
+  // \.(?=\d{3}\.\d{3}) matches the dot before the last 6 digits (millions separator)
+
+  formatted = formatted.replace(/\.(?=\d{3}\.\d{3}$)/, "'");
+
+  // Handle Billions: 1.000'000.000
+  // The regex above only replaces the dot before the last 6 digits.
+  // If we have 1.234.567.890 -> 1.234'567.890
+  // It seems correct based on "millions apostrophe".
+
+  return `$${formatted}`;
+};
 
 // Categorías disponibles
 export const CATEGORIES = [
@@ -15,72 +50,76 @@ export const CATEGORIES = [
 ];
 
 // Obtener todos los gastos
-export const getExpenses = () => {
+export const getExpenses = async (mode = 'personal') => {
   try {
-    const expenses = localStorage.getItem(EXPENSES_KEY);
-    return expenses ? JSON.parse(expenses) : [];
+    const url = mode ? `${API_URL}?mode=${mode}` : API_URL;
+    const response = await fetch(url, {
+      headers: getHeaders(),
+    });
+    if (!response.ok) throw new Error('Error fetching expenses');
+    return await response.json();
   } catch (error) {
     console.error('Error al cargar gastos:', error);
     return [];
   }
 };
 
-// Guardar todos los gastos
-export const saveExpenses = (expenses) => {
-  try {
-    localStorage.setItem(EXPENSES_KEY, JSON.stringify(expenses));
-    return true;
-  } catch (error) {
-    console.error('Error al guardar gastos:', error);
-    return false;
-  }
-};
-
 // Agregar un nuevo gasto
-export const addExpense = (expense) => {
-  const expenses = getExpenses();
-  const newExpense = {
-    id: Date.now().toString(),
-    ...expense,
-    date: expense.date || new Date().toISOString().split('T')[0],
-    createdAt: new Date().toISOString(),
-  };
-  expenses.push(newExpense);
-  saveExpenses(expenses);
-  return newExpense;
+export const addExpense = async (expense) => {
+  try {
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(expense),
+    });
+    if (!response.ok) throw new Error('Error adding expense');
+    return await response.json();
+  } catch (error) {
+    console.error('Error al agregar gasto:', error);
+    throw error;
+  }
 };
 
 // Actualizar un gasto existente
-export const updateExpense = (id, updatedData) => {
-  const expenses = getExpenses();
-  const index = expenses.findIndex(exp => exp.id === id);
-  if (index !== -1) {
-    expenses[index] = { ...expenses[index], ...updatedData };
-    saveExpenses(expenses);
-    return expenses[index];
+export const updateExpense = async (id, updatedData) => {
+  try {
+    const response = await fetch(`${API_URL}/${id}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(updatedData),
+    });
+    if (!response.ok) throw new Error('Error updating expense');
+    return await response.json();
+  } catch (error) {
+    console.error('Error al actualizar gasto:', error);
+    throw error;
   }
-  return null;
 };
 
 // Eliminar un gasto
-export const deleteExpense = (id) => {
-  const expenses = getExpenses();
-  const filtered = expenses.filter(exp => exp.id !== id);
-  saveExpenses(filtered);
-  return filtered;
+export const deleteExpense = async (id) => {
+  try {
+    const response = await fetch(`${API_URL}/${id}`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+    });
+    if (!response.ok) throw new Error('Error deleting expense');
+    return true;
+  } catch (error) {
+    console.error('Error al eliminar gasto:', error);
+    throw error;
+  }
 };
 
 // Obtener el total de gastos
-export const getTotalExpenses = (expenses = null) => {
-  const expenseList = expenses || getExpenses();
-  return expenseList.reduce((total, expense) => total + parseFloat(expense.amount || 0), 0);
+export const getTotalExpenses = (expenses = []) => {
+  return expenses.reduce((total, expense) => total + parseFloat(expense.amount || 0), 0);
 };
 
 // Obtener gastos por categoría
-export const getExpensesByCategory = (expenses = null) => {
-  const expenseList = expenses || getExpenses();
+export const getExpensesByCategory = (expenses = []) => {
   const byCategory = {};
-  
+
   CATEGORIES.forEach(cat => {
     byCategory[cat.value] = {
       label: cat.label,
@@ -90,7 +129,7 @@ export const getExpensesByCategory = (expenses = null) => {
     };
   });
 
-  expenseList.forEach(expense => {
+  expenses.forEach(expense => {
     const category = expense.category || 'otros';
     if (byCategory[category]) {
       byCategory[category].total += parseFloat(expense.amount || 0);
@@ -104,16 +143,15 @@ export const getExpensesByCategory = (expenses = null) => {
 };
 
 // Obtener gastos por periodo (día, semana, mes)
-export const getExpensesByPeriod = (period = 'month', expenses = null) => {
-  const expenseList = expenses || getExpenses();
+export const getExpensesByPeriod = (period = 'month', expenses = []) => {
   const grouped = {};
 
-  expenseList.forEach(expense => {
+  expenses.forEach(expense => {
     const date = new Date(expense.date);
     let key;
 
     if (period === 'day') {
-      key = expense.date;
+      key = expense.date.split('T')[0]; // Ensure date format
     } else if (period === 'week') {
       const weekStart = new Date(date);
       weekStart.setDate(date.getDate() - date.getDay());
@@ -136,10 +174,8 @@ export const getExpensesByPeriod = (period = 'month', expenses = null) => {
 };
 
 // Obtener estadísticas
-export const getStatistics = (expenses = null) => {
-  const expenseList = expenses || getExpenses();
-  
-  if (expenseList.length === 0) {
+export const getStatistics = (expenses = []) => {
+  if (expenses.length === 0) {
     return {
       total: 0,
       average: 0,
@@ -147,20 +183,21 @@ export const getStatistics = (expenses = null) => {
       topCategory: null,
       weeklyAverage: 0,
       monthlyAverage: 0,
+      count: 0,
     };
   }
 
-  const total = getTotalExpenses(expenseList);
-  const average = total / expenseList.length;
-  const highest = Math.max(...expenseList.map(e => parseFloat(e.amount || 0)));
-  
-  const byCategory = getExpensesByCategory(expenseList);
-  const topCategory = byCategory.reduce((max, cat) => 
+  const total = getTotalExpenses(expenses);
+  const average = total / expenses.length;
+  const highest = Math.max(...expenses.map(e => parseFloat(e.amount || 0)));
+
+  const byCategory = getExpensesByCategory(expenses);
+  const topCategory = byCategory.reduce((max, cat) =>
     cat.total > (max?.total || 0) ? cat : max, null
   );
 
   // Calcular promedio semanal
-  const dates = expenseList.map(e => new Date(e.date).getTime());
+  const dates = expenses.map(e => new Date(e.date).getTime());
   const minDate = Math.min(...dates);
   const maxDate = Math.max(...dates);
   const daysDiff = (maxDate - minDate) / (1000 * 60 * 60 * 24);
@@ -178,14 +215,13 @@ export const getStatistics = (expenses = null) => {
     topCategory,
     weeklyAverage,
     monthlyAverage,
-    count: expenseList.length,
+    count: expenses.length,
   };
 };
 
 // Filtrar gastos por rango de fechas
-export const filterExpensesByDateRange = (startDate, endDate, expenses = null) => {
-  const expenseList = expenses || getExpenses();
-  return expenseList.filter(expense => {
+export const filterExpensesByDateRange = (startDate, endDate, expenses = []) => {
+  return expenses.filter(expense => {
     const expenseDate = new Date(expense.date);
     const start = new Date(startDate);
     const end = new Date(endDate);
@@ -194,16 +230,14 @@ export const filterExpensesByDateRange = (startDate, endDate, expenses = null) =
 };
 
 // Exportar gastos a CSV
-export const exportToCSV = (expenses = null) => {
-  const expenseList = expenses || getExpenses();
-  
-  if (expenseList.length === 0) {
+export const exportToCSV = (expenses = []) => {
+  if (expenses.length === 0) {
     return null;
   }
 
   const headers = ['Fecha', 'Descripción', 'Categoría', 'Monto'];
-  const rows = expenseList.map(exp => [
-    exp.date,
+  const rows = expenses.map(exp => [
+    new Date(exp.date).toLocaleDateString(),
     exp.description,
     CATEGORIES.find(c => c.value === exp.category)?.label || exp.category,
     exp.amount,
@@ -218,9 +252,9 @@ export const exportToCSV = (expenses = null) => {
 };
 
 // Descargar CSV
-export const downloadCSV = (expenses = null) => {
+export const downloadCSV = (expenses = []) => {
   const csvContent = exportToCSV(expenses);
-  
+
   if (!csvContent) {
     alert('No hay gastos para exportar');
     return;
@@ -229,11 +263,11 @@ export const downloadCSV = (expenses = null) => {
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
   const link = document.createElement('a');
   const url = URL.createObjectURL(blob);
-  
+
   link.setAttribute('href', url);
   link.setAttribute('download', `migasto_gastos_${new Date().toISOString().split('T')[0]}.csv`);
   link.style.visibility = 'hidden';
-  
+
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
@@ -255,5 +289,109 @@ export const saveTheme = (theme) => {
     return true;
   } catch (error) {
     return false;
+  }
+};
+
+// --- INCOME FUNCTIONS ---
+
+const INCOME_API_URL = 'http://localhost:3001/api/incomes';
+
+// Obtener todos los ingresos
+export const getIncomes = async (mode = 'personal') => {
+  try {
+    const url = mode ? `${INCOME_API_URL}?mode=${mode}` : INCOME_API_URL;
+    const response = await fetch(url, {
+      headers: getHeaders(),
+    });
+    if (!response.ok) throw new Error('Error fetching incomes');
+    return await response.json();
+  } catch (error) {
+    console.error('Error al cargar ingresos:', error);
+    return [];
+  }
+};
+
+// Agregar un nuevo ingreso
+export const addIncome = async (income) => {
+  try {
+    const response = await fetch(INCOME_API_URL, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(income),
+    });
+    if (!response.ok) throw new Error('Error adding income');
+    return await response.json();
+  } catch (error) {
+    console.error('Error al agregar ingreso:', error);
+    throw error;
+  }
+};
+
+// Eliminar un ingreso
+export const deleteIncome = async (id) => {
+  try {
+    const response = await fetch(`${INCOME_API_URL}/${id}`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+    });
+    if (!response.ok) throw new Error('Error deleting income');
+    return true;
+  } catch (error) {
+    console.error('Error al eliminar ingreso:', error);
+    throw error;
+  }
+};
+
+// Obtener el total de ingresos
+export const getTotalIncomes = (incomes = []) => {
+  return incomes.reduce((total, income) => total + parseFloat(income.amount || 0), 0);
+};
+
+// --- EVENTS FUNCTIONS ---
+
+const EVENT_API_URL = 'http://localhost:3001/api/events';
+
+// Obtener todos los eventos
+export const getEvents = async () => {
+  try {
+    const response = await fetch(EVENT_API_URL, {
+      headers: getHeaders(),
+    });
+    if (!response.ok) throw new Error('Error fetching events');
+    return await response.json();
+  } catch (error) {
+    console.error('Error al cargar eventos:', error);
+    return [];
+  }
+};
+
+// Agregar un nuevo evento
+export const addEvent = async (event) => {
+  try {
+    const response = await fetch(EVENT_API_URL, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(event),
+    });
+    if (!response.ok) throw new Error('Error adding event');
+    return await response.json();
+  } catch (error) {
+    console.error('Error al agregar evento:', error);
+    throw error;
+  }
+};
+
+// Eliminar un evento
+export const deleteEvent = async (id) => {
+  try {
+    const response = await fetch(`${EVENT_API_URL}/${id}`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+    });
+    if (!response.ok) throw new Error('Error deleting event');
+    return true;
+  } catch (error) {
+    console.error('Error al eliminar evento:', error);
+    throw error;
   }
 };
