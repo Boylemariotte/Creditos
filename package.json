@@ -32,6 +32,6 @@
     "start": "concurrently \"npm run server\" \"npm run dev\" --kill-others --prefix-colors \"magenta,blue\"",
     "build": "vite build",
     "preview": "vite preview",
-    "postinstall": "prisma generate --schema=./server/prisma/schema.prisma"
+    "postinstall": "prisma generate"
   }
 }

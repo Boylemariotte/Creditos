@@ -27,6 +27,11 @@ const authenticateToken = (req, res, next) => {
     });
 };
 
+// Health Check
+app.get('/api/health', (req, res) => {
+    res.json({ status: 'ok', timestamp: new Date() });
+});
+
 // Register
 app.post('/api/auth/register', async (req, res) => {
     try {
