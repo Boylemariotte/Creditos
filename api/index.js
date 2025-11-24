@@ -32,6 +32,17 @@ app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date() });
 });
 
+// Database Health Check
+app.get('/api/health-db', async (req, res) => {
+    try {
+        await prisma.$queryRaw`SELECT 1`;
+        res.json({ status: 'connected', message: 'Database connection successful' });
+    } catch (error) {
+        console.error('Database Connection Error:', error);
+        res.status(500).json({ status: 'error', message: 'Database connection failed', error: error.message });
+    }
+});
+
 // Register
 app.post('/api/auth/register', async (req, res) => {
     try {
@@ -89,7 +100,8 @@ app.post('/api/auth/login', async (req, res) => {
             }
         });
     } catch (error) {
-        res.status(500).json({ error: 'Error logging in' });
+        console.error('Login Error:', error);
+        res.status(500).json({ error: 'Error logging in', details: error.message });
     }
 });
 
